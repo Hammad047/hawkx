@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from hawkx.utils.logger import setup_logger
+from utils.logger import setup_logger
 
 logger = setup_logger(__name__)
 

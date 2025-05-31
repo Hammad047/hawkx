@@ -1,8 +1,8 @@
 # core/signal_engine.py
 
 import pandas as pd
-from hawkx.strategies.rsi_macd_strategy import RSIMACDStrategy
-from hawkx.utils.logger import setup_logger
+from strategies.rsi_macd_strategy import RSIMACDStrategy
+from utils.logger import setup_logger
 
 logger = setup_logger(__name__)
 

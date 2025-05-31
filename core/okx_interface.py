@@ -1,6 +1,6 @@
 import ccxt
 
-from hawkx.core.broker import Broker, logger
+from core.broker import Broker, logger
 
 
 class OKXInterface(Broker):

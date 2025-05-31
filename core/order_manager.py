@@ -1,8 +1,8 @@
 # core/order_manager.py
 
-from hawkx.core.risk_management import calculate_position_size, calculate_tp_sl
-from hawkx.utils.logger import setup_logger
-from hawkx.utils.email_alert import send_email
+from core.risk_management import calculate_position_size, calculate_tp_sl
+from utils.logger import setup_logger
+from utils.email_alert import send_email
 
 logger = setup_logger(__name__)
 

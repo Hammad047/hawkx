@@ -2,7 +2,7 @@
 import logging
 
 import pandas as pd
-from hawkx.core.broker import Broker
+from core.broker import Broker
 logger = logging.getLogger(__name__)
 
 class DataFetcher:

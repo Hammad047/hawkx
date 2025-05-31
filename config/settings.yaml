@@ -13,7 +13,7 @@ trading:
   alerts:
     email: true
   risk_per_trade_pct: 1.0
-  price_max_threshold: 50.0
+  price_max_threshold: 200.0
   volume_min_threshold: 50000
   timeframes: ["5m", "1h", "4h", "1d"]
   strategy: "rsi_macd"
