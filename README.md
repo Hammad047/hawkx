@@ -14,7 +14,7 @@ HawkX is a powerful, modular crypto trading bot written in Python. It performs r
 - ✅ Risk-managed trade sizing
 - ✅ Email alerts with trade summary
 - ✅ Trade performance logging
-- ✅ `--test-mode` and `--force-signal` CLI options
+- ✅ `--test-mode` and `--final-signal` CLI options
 - ✅ Manual symbol override (`--symbol BCT ETH`)
 - ✅ Easily extendable (strategies & exchanges)
 
