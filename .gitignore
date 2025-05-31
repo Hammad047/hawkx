@@ -47,3 +47,5 @@ var/
 
 site.retry
 *.retry
+__pycache__/
+*.pyc
