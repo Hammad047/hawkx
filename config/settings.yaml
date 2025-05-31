@@ -1,0 +1,36 @@
+api:
+  okx:
+    api_key: "api_key"
+    api_secret: "api_secret"
+    api_passphrase: "api_passphrase"
+
+trading:
+  capital_usd: 425
+  symbols:
+    - RDNT/USDT
+    - PENDLE/USDT
+    - SOL/USDT
+  alerts:
+    email: true
+  risk_per_trade_pct: 1.0
+  price_max_threshold: 200.0
+  volume_min_threshold: 50000
+  timeframes: ["5m", "1h", "4h", "1d"]
+  strategy: "rsi_macd"
+
+alerts:
+  email:
+    enabled: true
+    sender: "sender_email"
+    receiver: "receiver_email"
+    smtp_server: "smtp.gmail.com"
+    smtp_port: 465
+    password: "sender_app_password"
+
+logging:
+  level: INFO
+  file: "hawkx.log"
+
+dashboard:
+  enabled: true
+  update_interval_sec: 300
