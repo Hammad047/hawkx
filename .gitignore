@@ -44,7 +44,7 @@ var/
 .installed.cfg
 *.egg
 
-
+config/settings.yaml
 site.retry
 *.retry
 __pycache__/

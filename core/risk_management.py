@@ -1,6 +1,11 @@
+def calculate_position_size(self, entry_price, stop_loss_price) -> float:
+    try:
+        capital = float(25)
+        entry_price = float(entry_price)
+        stop_loss_price = float(stop_loss_price)
+    except Exception as e:
+        raise ValueError(f"Invalid input to calculate_position_size: {e}")
 
-def calculate_position_size(capital: float, entry_price: float, stop_loss_price: float) -> float:
-    # e.g., risk 2% of capital per trade
     risk_per_trade = capital * 0.02
     stop_loss_amount = abs(entry_price - stop_loss_price)
     position_size = risk_per_trade / stop_loss_amount if stop_loss_amount else 0

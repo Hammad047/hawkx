@@ -1,58 +1,80 @@
 # core/order_manager.py
-
-from core.risk_management import calculate_position_size, calculate_tp_sl
+from core.risk_management import calculate_position_size
 from utils.logger import setup_logger
+from datetime import datetime
 from utils.email_alert import send_email
+from data.storage import DataStorage
 
 logger = setup_logger(__name__)
 
+
 class OrderManager:
-    def __init__(self, broker, capital, email_config=None):
+    def __init__(self, broker, capital_usd, risk_pct=1.0):
         self.broker = broker
-        self.capital = capital
-        self.email_config = email_config
+        self.capital_usd = capital_usd
+        self.risk_pct = risk_pct
 
-    def process_signal(self, symbol, timeframe, signal, metadata):
-        entry_price = metadata['entry_price']
-        volatility = abs(metadata['macd_diff'])  # crude proxy
-        tp, sl = calculate_tp_sl(entry_price, volatility, signal)
-        position_size = calculate_position_size(self.capital, entry_price, sl)
 
-        logger.info(f"Placing {signal} order for {symbol} [{timeframe}]")
-        logger.info(f"Entry: {entry_price}, TP: {tp}, SL: {sl}, Qty: {position_size}")
-
+    def execute_order(self, symbol, signal, price=None, tp=None, sl=None):
         try:
-            if signal == "BUY":
-                order = self.broker.place_order(symbol, "buy", amount=position_size, price=None, type='market')
-            elif signal == "SELL":
-                order = self.broker.place_order(symbol, "sell", amount=position_size, price=None, type='market')
-            else:
-                logger.warning("Unknown signal, skipping.")
-                return
+            # ✅ Fetch live price if not provided
+            if price is None:
+                price = self.broker.fetch_ticker(symbol)['last']
 
-            logger.info(f"Order placed: {order}")
-            self.send_trade_alert(symbol, timeframe, signal, entry_price, tp, sl, position_size)
+            # Ensure numeric types
+            price = float(price)
+            tp = float(tp) if tp is not None else None
+            sl = float(sl) if sl is not None else None
+
+            side = 'buy' if signal.upper() == 'BUY' else 'sell'
+
+            # ✅ Use updated position size logic
+            position_size = calculate_position_size(self.capital_usd, price, sl)
+
+            logger.info(f"[ORDER] Placing {signal.upper()} for {symbol} — Size: {position_size}, Price: {price}")
+            self.broker.place_order(
+                symbol=symbol,
+                side=side,
+                amount=position_size,
+                price=price,
+                type='market'
+            )
+
+            timestamp = datetime.utcnow().isoformat()
+            trade_log = {
+                "symbol": symbol,
+                "side": signal,
+                "price": price,
+                "stop_loss": sl,
+                "take_profit": tp,
+                "qty": position_size,
+                "timestamp": timestamp
+            }
+
+            # ✅ Log to CSV
+            DataStorage().save_trade_log_csv(trade_log)
+
+            # ✅ Email notification
+            from config.settings import SETTINGS
+            email_cfg = SETTINGS['alerts']['email']
+            if email_cfg and email_cfg.get("enabled"):
+                message = f"""
+    🚀 Trade Executed: {signal.upper()}
+    📈 Symbol: {symbol}
+    💰 Entry Price: {price}
+    🎯 Take Profit: {tp}
+    🛡 Stop Loss: {sl}
+    📦 Size: {position_size}
+    🕒 Time: {timestamp}
+                """
+                send_email(
+                    subject=f"📢 Trade Executed: {signal.upper()} {symbol}",
+                    body=message.strip(),
+                    config=email_cfg
+                )
+
+            return trade_log
 
         except Exception as e:
-            logger.error(f"Failed to place order for {symbol}: {e}")
-
-    def send_trade_alert(self, symbol, timeframe, signal, entry, tp, sl, qty):
-        if not self.email_config or not self.email_config.get('enabled'):
-            return
-
-        body = f"""
-🔔 Live Trade Executed 🔔
-
-🪙 Symbol: {symbol}
-🕒 Timeframe: {timeframe}
-📈 Signal: {signal}
-💰 Entry Price: ${entry:.4f}
-📦 Quantity: {qty}
-🎯 Take Profit: ${tp}
-🛡 Stop Loss: ${sl}
-"""
-        send_email(
-            subject=f"{signal} EXECUTED: {symbol} [{timeframe}]",
-            body=body,
-            config=self.email_config
-        )
+            logger.error(f"[ORDER FAILED] {symbol}: {e}")
+            return None

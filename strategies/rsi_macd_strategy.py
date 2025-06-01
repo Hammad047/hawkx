@@ -3,34 +3,52 @@
 import pandas as pd
 import ta
 
+
 class RSIMACDStrategy:
-    def __init__(self, rsi_low=30, rsi_high=70):
+    def __init__(self, rsi_low=46, rsi_high=60):
         self.rsi_low = rsi_low
         self.rsi_high = rsi_high
 
     def generate_signal(self, df: pd.DataFrame):
-        df = df.copy()
+        # Safety check
+        if len(df) < 50:
+            return None, {}
 
-        rsi = ta.momentum.RSIIndicator(close=df['close'], window=14).rsi()
-        macd = ta.trend.MACD(close=df['close'])
-        ema_50 = ta.trend.EMAIndicator(close=df['close'], window=50).ema_indicator()
+        # Calculate indicators (if not already present)
+        if 'rsi' not in df.columns:
+            df['rsi'] = ta.momentum.RSIIndicator(df['close']).rsi()
 
-        df['rsi'] = rsi
-        df['macd'] = macd.macd()
-        df['macd_signal'] = macd.macd_signal()
-        df['macd_diff'] = df['macd'] - df['macd_signal']
-        df['ema_50'] = ema_50
+        if 'ema_50' not in df.columns:
+            df['ema_50'] = ta.trend.EMAIndicator(df['close'], window=50).ema_indicator()
+
+        if 'macd' not in df.columns or 'macd_diff' not in df.columns:
+            macd = ta.trend.MACD(df['close'])
+            df['macd'] = macd.macd()
+            df['macd_diff'] = macd.macd_diff()
+
+        # Drop NA to avoid access issues
+        df = df.dropna()
+
+        # Get last values
+        rsi = df['rsi'].iloc[-1]
+        macd = df['macd'].iloc[-1]
+        macd_diff = df['macd_diff'].iloc[-1]
+        ema_50 = df['ema_50'].iloc[-1]
+        close = df['close'].iloc[-1]
 
         signal = None
-        if df['rsi'].iloc[-1] < self.rsi_low and df['macd_diff'].iloc[-1] > 0 and df['close'].iloc[-1] > df['ema_50'].iloc[-1]:
+        if rsi < self.rsi_low and macd_diff > -0.0005 and close > ema_50 * 0.98:
             signal = 'BUY'
-        elif df['rsi'].iloc[-1] > self.rsi_high and df['macd_diff'].iloc[-1] < 0 and df['close'].iloc[-1] < df['ema_50'].iloc[-1]:
+        elif rsi > self.rsi_high and macd_diff < 0.0005 and close < ema_50 * 1.02:
             signal = 'SELL'
 
+        print(f"Debug: RSI={rsi}, MCD Diff={macd_diff}, Close={close}, EMA50={ema_50}, Signal={signal}")
+
         return signal, {
-            'rsi': rsi.iloc[-1],
-            'macd': df['macd'].iloc[-1],
-            'macd_diff': df['macd_diff'].iloc[-1],
-            'ema_50': df['ema_50'].iloc[-1],
-            'entry_price': df['close'].iloc[-1]
+            'rsi': rsi,
+            'macd': macd,
+            'macd_diff': macd_diff,
+            'ema_50': ema_50,
+            'entry_price': close
         }
+

@@ -9,17 +9,21 @@ class DataFetcher:
     def __init__(self, broker: Broker):
         self.broker = broker
 
-
     def get_symbol_data(self, symbol: str, timeframe: str, limit: int = 100) -> pd.DataFrame:
         """
         Fetch OHLCV data and return as a pandas DataFrame.
         """
         try:
-            raw = self.broker.safe_fetch_ohlcv(symbol, timeframe, limit)
-            df = pd.DataFrame(raw, columns=['timestamp', 'open', 'high', 'low', 'close', 'volume'])
-            df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
-            df.set_index('timestamp', inplace=True)
-            return df
+            filename = "data/sample_ohlcv.csv"
+            df = self.broker.safe_fetch_ohlcv(symbol, timeframe, limit)
+
+            if df is not None and not df.empty:
+                df.to_csv(filename, index=True)
+                print(f"✅ Exported OHLCV to {filename}")
+                return df
+            else:
+                print(f"❌ Failed to fetch OHLCV for {symbol} [{timeframe}]")
+                return None
         except Exception as e:
             logger.error(f"Failed to fetch OHLCV for {symbol} [{timeframe}]: {e}")
             return None

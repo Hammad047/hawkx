@@ -28,12 +28,15 @@ class OKXInterface(Broker):
     def get_price(self, symbol: str) -> float:
         return self.exchange.fetch_ticker(symbol)['last']
 
-    def safe_fetch_ohlcv(self, symbol, timeframe, limit=100):
-        try:
-            return self.exchange.fetch_ohlcv(symbol, timeframe, limit=limit)
-        except Exception as e:
-            logger.error(f"Failed to fetch OHLCV from OKX for {symbol} [{timeframe}]: {e}")
-            return None
+    # def safe_fetch_ohlcv(self, symbol, timeframe, limit=100):
+    #     try:
+    #         return self.exchange.fetch_ohlcv(symbol, timeframe, limit=limit)
+    #     except Exception as e:
+    #         logger.error(f"Failed to fetch OHLCV from OKX for {symbol} [{timeframe}]: {e}")
+    #         return None
+
+    def fetch_ohlcv(self, symbol: str, timeframe: str, limit: int = 100):
+        return self.exchange.fetch_ohlcv(symbol, timeframe, limit=limit)
 
     def place_order(self, symbol: str, side: str, amount: float, price: float = None, type: str = 'market'):
         return self.exchange.create_order(symbol, type, side, amount, price)
